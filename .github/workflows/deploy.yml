@@ -28,4 +28,14 @@ jobs:
       - name: Upload Website to IPFS
         run: |
           CID=$(ipfs add -r --quieter . | tail -n1 | awk '{print $2}')
+          echo "Website CID: $CID"
           echo "IPFS_CID=$CID" >> $GITHUB_ENV
+
+      - name: Save IPFS CID as Artifact
+        run: echo $IPFS_CID > ipfs_cid.txt
+
+      - name: Upload CID Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: IPFS_CID
+          path: ipfs_cid.txt
