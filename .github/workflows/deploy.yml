@@ -3,46 +3,40 @@ name: Deploy Website to IPFS
 on:
   push:
     branches:
-      - main  # Runs the workflow on every push to the main branch
-
-permissions:
-  contents: read
-  actions: write
-  id-token: write
+      - main  # Adjust to your working branch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repository
-        uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-      - name: Install IPFS CLI
+      - name: Install IPFS
         run: |
-          wget https://dist.ipfs.tech/kubo/v0.20.0/kubo_v0.20.0_linux-amd64.tar.gz
-          tar -xvzf kubo_v0.20.0_linux-amd64.tar.gz
-          cd kubo
-          sudo install ipfs /usr/local/bin/ipfs
-
-      - name: Initialize IPFS
-        run: |
+          wget https://dist.ipfs.tech/kubo/latest/kubo-linux-amd64.tar.gz
+          tar -xvzf kubo-linux-amd64.tar.gz
+          sudo bash install.sh
           ipfs init
-          nohup ipfs daemon &  # Run IPFS in the background
-          sleep 5  # Wait for IPFS to start
+          ipfs daemon --init &
 
-      - name: Upload Website to IPFS via HTTP API
+      - name: Add website files to IPFS
         run: |
-          RESPONSE=$(curl -s -F file=@index.html "http://127.0.0.1:5001/api/v0/add")
-          CID=$(echo $RESPONSE | jq -r .Hash)
+          CID=$(ipfs add -r -Q ./website)
           echo "Website CID: $CID"
-          echo "IPFS_CID=$CID" >> $GITHUB_ENV
+          echo "CID=$CID" >> $GITHUB_ENV
 
-      - name: Save IPFS CID as Artifact
-        run: echo $IPFS_CID > ipfs_cid.txt
+      - name: Pin using Pinata
+        env:
+          PINATA_API_KEY: ${{ secrets.PINATA_API_KEY }}
+          PINATA_SECRET_API_KEY: ${{ secrets.PINATA_SECRET_API_KEY }}
+        run: |
+          curl -X POST "https://api.pinata.cloud/pinning/pinByHash" \
+          -H "pinata_api_key: $PINATA_API_KEY" \
+          -H "pinata_secret_api_key: $PINATA_SECRET_API_KEY" \
+          -H "Content-Type: application/json" \
+          --data '{"hashToPin":"'"$CID"'"}'
 
-      - name: Upload CID Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: IPFS_CID
-          path: ipfs_cid.txt
+      - name: Output Website URL
+        run: echo "Your site is now accessible at https://ipfs.io/ipfs/$CID"
