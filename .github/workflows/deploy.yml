@@ -1,1 +1,21 @@
+name: Deploy to IPFS
+
+on:
+  push:
+    branches:
+      - main  # Trigger workflow on push to 'main' branch
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Upload to IPFS using Pinata
+        run: |
+          curl -X POST -H "Authorization: Bearer ${{ secrets.PINATA_API_KEY }}" \
+          -F "file=@index.html" \
+          "https://api.pinata.cloud/pinning/pinFileToIPFS"
 
