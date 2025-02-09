@@ -1,5 +1,3 @@
-# IPFS_workshop2_decentralization
-
 # IPFS Workshop 2 - Decentralization
 
 This repository is part of an **IPFS Workshop** focused on decentralized file storage and website hosting using **IPFS (InterPlanetary File System)** and **Pinata**.
