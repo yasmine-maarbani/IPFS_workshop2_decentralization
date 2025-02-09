@@ -1,32 +1,32 @@
-name: Deploy Website to IPFS
+name: Deploy to IPFS
 
+# Trigger the workflow on pushes to the main branch or manually via the GitHub UI.
 on:
   push:
     branches:
-      - main  # Change if needed
+      - main
+  workflow_dispatch:
 
 jobs:
   deploy:
-    runs-on: windows-latest  # Use Windows runner
+    runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
+    # Step 1: Checkout the repository
+    - name: Checkout repository
+      uses: actions/checkout@v3
 
-      - name: Install IPFS on Windows
-        run: |
-          Invoke-WebRequest -Uri "https://dist.ipfs.tech/kubo/v0.22.0/kubo-windows-amd64.zip" -OutFile "ipfs.zip"
-          Expand-Archive -Path "ipfs.zip" -DestinationPath "."
-          cd kubo
-          .\install.bat
-          ipfs init
+    # Step 2: Check if the file exists (debug)
+    - name: Check file existence
+      run: ls -la ./pinataWebsite
 
-      - name: Start IPFS Daemon
-        run: Start-Process -NoNewWindow -FilePath "ipfs.exe" -ArgumentList "daemon"
-
-      - name: Add website files to IPFS
-        run: |
-          $CID = ipfs add -r -Q website
-          echo "::debug::Website CID: $CID"
-          echo "CID=$CID" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
-
+    # Step 3: Deploy to IPFS using aquiladev/ipfs-action
+    - name: Deploy to IPFS
+      uses: anantaramdas/ipfs-pinata-deploy-action@v1.6.4
+      with:
+        pin-name: 'index.html'
+        path: './website/index.html'
+        pinata-api-key: ${{ secrets.PINATA_API_KEY }}
+        pinata-secret-api-key: ${{ secrets.PINATA_API_SECRET }}
+        verbose: true
+        remove-old: true
