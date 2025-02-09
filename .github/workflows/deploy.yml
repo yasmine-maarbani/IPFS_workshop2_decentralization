@@ -18,7 +18,7 @@ jobs:
 
     # Step 2: Check if the file exists (debug)
     - name: Check file existence
-      run: ls -la ./pinataWebsite
+      run: ls -la ./website
 
     # Step 3: Deploy to IPFS using aquiladev/ipfs-action
     - name: Deploy to IPFS
