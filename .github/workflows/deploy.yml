@@ -1,22 +1,45 @@
-name: Deploy to IPFS
+name: Deploy Website to IPFS
 
 on:
   push:
     branches:
-      - main  # Trigger workflow on push to 'main' branch
+      - main  # Runs the workflow on every push to the main branch
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v2
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      - name: Upload to IPFS using Pinata
+      - name: Install IPFS CLI
         run: |
-          echo "Starting upload to IPFS"
-          curl -X POST -H "Authorization: Bearer ${{ secrets.PINATA_API_KEY }}" \
-          -F "file=@index.html" \
-          "https://api.pinata.cloud/pinning/pinFileToIPFS" \
-          -v  # This enables verbose output for debugging
+          curl -O https://dist.ipfs.tech/kubo/latest/kubo_latest_linux-amd64.tar.gz
+          tar -xvzf kubo_latest_linux-amd64.tar.gz
+          sudo mv ipfs /usr/local/bin/ipfs
+
+      - name: Initialize IPFS
+        run: |
+          ipfs init
+          ipfs daemon &
+
+      - name: Upload Website to IPFS
+        run: |
+          CID=$(ipfs add -r --quieter . | tail -n1 | awk '{print $2}')
+          echo "Website CID: $CID"
+          echo "IPFS_CID=$CID" >> $GITHUB_ENV
+
+      - name: Pin to Pinata
+        env:
+          PINATA_API_KEY: ${{ secrets.PINATA_API_KEY }}
+          PINATA_SECRET_API_KEY: ${{ secrets.PINATA_SECRET_API_KEY }}
+        run: |
+          curl -X POST "https://api.pinata.cloud/pinning/pinByHash" \
+            -H "Content-Type: application/json" \
+            -H "pinata_api_key: $PINATA_API_KEY" \
+            -H "pinata_secret_api_key: $PINATA_SECRET_API_KEY" \
+            --data "{ \"hashToPin\": \"$IPFS_CID\", \"pinataMetadata\": { \"name\": \"MyIPFSWebsite\" } }"
+
+      - name: Output Deployment Link
+        run: echo "Your website is now available at: https://ipfs.io/ipfs/${{ env.IPFS_CID }}/index.html"
