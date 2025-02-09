@@ -3,40 +3,29 @@ name: Deploy Website to IPFS
 on:
   push:
     branches:
-      - main  # Adjust to your working branch
+      - main  # Change if using another branch
 
 jobs:
   deploy:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest  # Windows runner
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install IPFS
+      - name: Install IPFS on Windows
         run: |
-          wget https://dist.ipfs.tech/kubo/latest/kubo-linux-amd64.tar.gz
-          tar -xvzf kubo-linux-amd64.tar.gz
-          sudo bash install.sh
+          Invoke-WebRequest -Uri "https://dist.ipfs.tech/kubo/latest/kubo-windows-amd64.zip" -OutFile "ipfs.zip"
+          Expand-Archive -Path "ipfs.zip" -DestinationPath "."
+          cd kubo
+          .\install.bat
           ipfs init
-          ipfs daemon --init &
 
+      - name: Start IPFS Daemon
+        run: Start-Process -NoNewWindow -FilePath "ipfs.exe" -ArgumentList "daemon"
+      
       - name: Add website files to IPFS
         run: |
-          CID=$(ipfs add -r -Q ./website)
-          echo "Website CID: $CID"
-          echo "CID=$CID" >> $GITHUB_ENV
-
-      - name: Pin using Pinata
-        env:
-          PINATA_API_KEY: ${{ secrets.PINATA_API_KEY }}
-          PINATA_SECRET_API_KEY: ${{ secrets.PINATA_SECRET_API_KEY }}
-        run: |
-          curl -X POST "https://api.pinata.cloud/pinning/pinByHash" \
-          -H "pinata_api_key: $PINATA_API_KEY" \
-          -H "pinata_secret_api_key: $PINATA_SECRET_API_KEY" \
-          -H "Content-Type: application/json" \
-          --data '{"hashToPin":"'"$CID"'"}'
-
-      - name: Output Website URL
-        run: echo "Your site is now accessible at https://ipfs.io/ipfs/$CID"
+          $CID = ipfs add -r -Q website
+          echo "::debug::Website CID: $CID"
+          echo "CID=$CID" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
