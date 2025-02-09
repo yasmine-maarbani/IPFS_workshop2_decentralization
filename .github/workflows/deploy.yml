@@ -15,14 +15,15 @@ jobs:
 
       - name: Install IPFS CLI
         run: |
-          curl -O https://dist.ipfs.tech/kubo/latest/kubo_latest_linux-amd64.tar.gz
-          tar -xvzf kubo_latest_linux-amd64.tar.gz
-          sudo mv ipfs /usr/local/bin/ipfs
+          wget https://dist.ipfs.tech/kubo/v0.20.0/kubo_v0.20.0_linux-amd64.tar.gz
+          tar -xvzf kubo_v0.20.0_linux-amd64.tar.gz
+          cd kubo
+          sudo install ipfs /usr/local/bin/ipfs
 
       - name: Initialize IPFS
         run: |
           ipfs init
-          ipfs daemon &
+          nohup ipfs daemon &  # Run the IPFS daemon in the background
 
       - name: Upload Website to IPFS
         run: |
