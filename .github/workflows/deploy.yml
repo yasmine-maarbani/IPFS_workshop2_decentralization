@@ -46,6 +46,3 @@ jobs:
         with:
           name: IPFS_CID
           path: ipfs_cid.txt
-
-      - name: Output Deployment Link
-        run: echo "Your website is now available at: https://ipfs.io/ipfs/${{ env.IPFS_CID }}/index.html"
