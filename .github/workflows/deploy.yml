@@ -5,13 +5,18 @@ on:
     branches:
       - main  # Runs the workflow on every push to the main branch
 
+permissions:
+  contents: read
+  actions: write  
+  id-token: write  
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4  # Updated to v4
 
       - name: Install IPFS CLI
         run: |
@@ -35,7 +40,7 @@ jobs:
         run: echo $IPFS_CID > ipfs_cid.txt
 
       - name: Upload CID Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4  
         with:
           name: IPFS_CID
           path: ipfs_cid.txt
