@@ -7,8 +7,8 @@ on:
 
 permissions:
   contents: read
-  actions: write  
-  id-token: write  
+  actions: write
+  id-token: write
 
 jobs:
   deploy:
@@ -16,7 +16,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v4  # Updated to v4
+        uses: actions/checkout@v4
 
       - name: Install IPFS CLI
         run: |
@@ -29,10 +29,12 @@ jobs:
         run: |
           ipfs init
           nohup ipfs daemon &  # Run IPFS in the background
+          sleep 5  # Wait for IPFS to start
 
-      - name: Upload Website to IPFS
+      - name: Upload Website to IPFS via HTTP API
         run: |
-          CID=$(ipfs add -r --quieter . | tail -n1 | awk '{print $2}')
+          RESPONSE=$(curl -s -F file=@index.html "http://127.0.0.1:5001/api/v0/add")
+          CID=$(echo $RESPONSE | jq -r .Hash)
           echo "Website CID: $CID"
           echo "IPFS_CID=$CID" >> $GITHUB_ENV
 
@@ -40,7 +42,10 @@ jobs:
         run: echo $IPFS_CID > ipfs_cid.txt
 
       - name: Upload CID Artifact
-        uses: actions/upload-artifact@v4  
+        uses: actions/upload-artifact@v4
         with:
           name: IPFS_CID
           path: ipfs_cid.txt
+
+      - name: Output Deployment Link
+        run: echo "Your website is now available at: https://ipfs.io/ipfs/${{ env.IPFS_CID }}/index.html"
