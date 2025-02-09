@@ -15,7 +15,8 @@ jobs:
 
       - name: Upload to IPFS using Pinata
         run: |
+          echo "Starting upload to IPFS"
           curl -X POST -H "Authorization: Bearer ${{ secrets.PINATA_API_KEY }}" \
           -F "file=@index.html" \
-          "https://api.pinata.cloud/pinning/pinFileToIPFS"
-
+          "https://api.pinata.cloud/pinning/pinFileToIPFS" \
+          -v  # This enables verbose output for debugging
