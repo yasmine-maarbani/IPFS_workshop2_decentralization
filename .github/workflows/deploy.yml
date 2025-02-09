@@ -3,11 +3,11 @@ name: Deploy Website to IPFS
 on:
   push:
     branches:
-      - main  # Change if using another branch
+      - main  # Change if needed
 
 jobs:
   deploy:
-    runs-on: windows-latest  # Windows runner
+    runs-on: windows-latest  # Use Windows runner
 
     steps:
       - name: Checkout repository
@@ -15,7 +15,7 @@ jobs:
 
       - name: Install IPFS on Windows
         run: |
-          Invoke-WebRequest -Uri "https://dist.ipfs.tech/kubo/latest/kubo-windows-amd64.zip" -OutFile "ipfs.zip"
+          Invoke-WebRequest -Uri "https://dist.ipfs.tech/kubo/v0.22.0/kubo-windows-amd64.zip" -OutFile "ipfs.zip"
           Expand-Archive -Path "ipfs.zip" -DestinationPath "."
           cd kubo
           .\install.bat
@@ -23,9 +23,10 @@ jobs:
 
       - name: Start IPFS Daemon
         run: Start-Process -NoNewWindow -FilePath "ipfs.exe" -ArgumentList "daemon"
-      
+
       - name: Add website files to IPFS
         run: |
           $CID = ipfs add -r -Q website
           echo "::debug::Website CID: $CID"
           echo "CID=$CID" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8
+
